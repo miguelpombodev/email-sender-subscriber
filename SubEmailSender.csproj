@@ -6,9 +6,11 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <UserSecretsId>0eaf9100-88b9-4c81-94e7-758f41faf5ff</UserSecretsId>
     </PropertyGroup>
     
     <ItemGroup>
+        <PackageReference Include="Infisical.Sdk" Version="3.0.1" />
         <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.7" />
         <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.7" />
         <PackageReference Include="MimeKit" Version="4.9.0" />
@@ -17,15 +19,6 @@
         <PackageReference Include="RabbitMQ.Client" Version="7.1.2" />
         <PackageReference Include="Serilog" Version="4.3.0" />
         <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
-    </ItemGroup>
-    
-    <ItemGroup>
-      <None Update="appsettings.json">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="appsettings.example.json">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
     </ItemGroup>
 
 </Project>

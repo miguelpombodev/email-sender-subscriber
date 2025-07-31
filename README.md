@@ -56,39 +56,6 @@
 ```bash
   dotnet restore
 ```
-
-
----
-
-## 🔧 Configuração
-
-### appsettings.json
-
-Para que o app funcione, crie um arquivo `appsettings.json` na raiz do projeto com seu ambiente SMTP. Utilize o exemplo abaixo como base:
-
-#### appsettings.example.json
-```json
-{
-    "Settings": {
-        "Host": "",
-        "Port": 0,
-        "User": "",
-        "Password": "",
-        "FromEmail": "",
-        "FromName": ""
-    }
-}
-```
-
-- **Host**: Endereço do servidor SMTP (exemplo: sandbox.smtp.mailtrap.io)
-- **Port**: Porta SMTP (exemplo: 465)
-- **User**: Usuário SMTP
-- **Password**: Senha SMTP
-- **FromEmail**: E-mail do remetente
-- **FromName**: Nome do remetente
-
-Renomeie `appsettings.example.json` para `appsettings.json` e preencha com seus dados.
-
 ---
 
 ## 📨 Payload de Exemplo

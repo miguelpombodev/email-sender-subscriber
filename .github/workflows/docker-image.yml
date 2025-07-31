@@ -18,11 +18,14 @@ jobs:
         name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       -
-        name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        name: Build Docker Image
+        run: | 
+          docker build 
+          --build-args INFISICAL_CLIENT_ID=${{ secrets.INFISICAL_CLIENT_ID }}
+          --build-args INFISICAL_CLIENT_SECRET=${{ secrets.INFISICAL_CLIENT_SECRET }}
+          --build-args INFISICAL_PROJECT_ID=${{ secrets.INFISICAL_PROJECT_ID }} 
+          -t wallghost/email-sender-subscriber:latest
+          .
       -
-        name: Build and push
-        uses: docker/build-push-action@v6
-        with:
-          push: true
-          tags: wallghost/email-sender-subscriber:latest
+        name: Push Image to registry
+        run: docker push wallghost/email-sender-subscriber:latest

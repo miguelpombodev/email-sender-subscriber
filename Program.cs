@@ -1,4 +1,6 @@
 ﻿using System.Text;
+using Infisical.Sdk;
+using Infisical.Sdk.Model;
 using MailKit.Net.Smtp;
 using Microsoft.Extensions.Configuration;
 using MimeKit;
@@ -6,29 +8,33 @@ using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using Serilog;
+using SubEmailSender.Config;
 
 namespace SubEmailSender;
 
 class Program
 {
-    public static IConfigurationRoot Configuration { get; } = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
-
     private const string QueueName = "sub-email-sender";
     private const string ExchangeName = "sub-email-sender-exchange";
     private const string RoutingKeyName = "sub-email";
-    
-    private static readonly ILogger Logger = new LoggerConfiguration().WriteTo.Console().CreateLogger(); 
 
-    private static readonly IConfigurationSection Settings = Configuration.GetRequiredSection("Settings");
+    private static readonly ILogger Logger = new LoggerConfiguration().WriteTo.Console().CreateLogger();
 
-    private static readonly string SmtpHost = Settings["Host"] ?? throw new ArgumentNullException("Host not configured!");
-    private static readonly int SmtpPort = Convert.ToInt32(Settings["Port"]);
-    private static readonly string SmtpUser = Settings["User"] ?? throw new ArgumentNullException("User not configured!");
-    private static readonly string SmtpPass = Settings["Password"] ?? throw new ArgumentNullException("Password not configured!");
-    private static readonly string FromEmail = Settings["FromEmail"] ?? throw new ArgumentNullException("FromEmail not configured!");
-    private static readonly string FromName = Settings["FromName"] ?? throw new ArgumentNullException("FromName not configured!");
-    
-    
+    private static readonly SecretManager SecretManager = new(
+        Environment.GetEnvironmentVariable("INFISICAL_CLIENT_ID"),
+        Environment.GetEnvironmentVariable("INFISICAL_CLIENT_SECRET"),
+        Environment.GetEnvironmentVariable("INFISICAL_PROJECT_ID")
+    );
+
+    private static readonly SmtpServer SmtpServer = new(
+        GetInfisicalSecret("SmtpHost").Result.SecretValue,
+        GetInfisicalSecret("SmtpUser").Result.SecretValue,
+        GetInfisicalSecret("SmtpPassword").Result.SecretValue,
+        GetInfisicalSecret("SmtpFromEmail").Result.SecretValue,
+        GetInfisicalSecret("SmtpFromName").Result.SecretValue,
+        Convert.ToInt32(GetInfisicalSecret("SmtpPort").Result.SecretValue)
+    );
+
     public static async Task Main(string[] args)
     {
         Logger.Information("EmailSubSender Iniciado");
@@ -43,7 +49,7 @@ class Program
         await channel.QueueBindAsync(QueueName, ExchangeName, RoutingKeyName);
 
         var consumer = new AsyncEventingBasicConsumer(channel);
-        
+
         consumer.ReceivedAsync += OnMessageReceived;
 
         await channel.BasicConsumeAsync(queue: QueueName, autoAck: true, consumer: consumer);
@@ -58,15 +64,36 @@ class Program
         {
             var messageJson = Encoding.UTF8.GetString(ea.Body.ToArray());
             var emailData = JsonConvert.DeserializeObject<EmailToBeSend>(messageJson);
-            
+
             Logger.Information("Mensagem recebida para: {To}", emailData.To);
-            
+
             await SendEmailAsync(emailData);
         }
         catch (Exception ex)
         {
             Logger.Error("Erro ao processar mensagem: {Exception}", ex);
         }
+    }
+
+    private static async Task<Secret> GetInfisicalSecret(string secretName)
+    {
+        var settings = new InfisicalSdkSettingsBuilder().Build();
+        var infisicalClient = new InfisicalClient(settings);
+
+        var _ = infisicalClient.Auth().UniversalAuth().LoginAsync(SecretManager.ClientId,
+            SecretManager.ClientSecret).Result;
+
+        var getSecretOptions = new GetSecretOptions
+        {
+            SecretName = secretName,
+            EnvironmentSlug = SecretManager.Environment,
+            SecretPath = SecretManager.SecretPath,
+            ProjectId = SecretManager.ProjectId
+        };
+
+        var secret = await infisicalClient.Secrets().GetAsync(getSecretOptions);
+
+        return secret;
     }
 
 
@@ -78,10 +105,10 @@ class Program
 
         try
         {
-            await client.ConnectAsync(SmtpHost, SmtpPort, useSsl: false);
+            await client.ConnectAsync(SmtpServer.Host, SmtpServer.Port, useSsl: false);
             Logger.Information("Conectado ao host SMTP.");
 
-            await client.AuthenticateAsync(SmtpUser, SmtpPass);
+            await client.AuthenticateAsync(SmtpServer.User, SmtpServer.Password);
             Logger.Information("Autenticado com sucesso.");
 
             await client.SendAsync(message);
@@ -103,15 +130,15 @@ class Program
         try
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(FromName, FromEmail));
+            message.From.Add(new MailboxAddress(SmtpServer.FromName, SmtpServer.FromEmail));
             message.To.Add(new MailboxAddress(email.To, email.To));
             message.Subject = email.Subject;
-            
+
             message.Body = new BodyBuilder
             {
                 HtmlBody = email.Body
             }.ToMessageBody();
-            
+
             Logger.Information("Email message built");
 
             return message;
