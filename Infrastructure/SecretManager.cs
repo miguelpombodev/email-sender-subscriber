@@ -2,11 +2,18 @@ namespace SubEmailSender.Infrastructure;
 
 public class SecretManager
 {
-    public SecretManager(string? clientId, string? clientSecret, string? projectId, string environment = "dev",string secretPath = "/")
+    public SecretManager(string? clientId, string? clientSecret, string? projectId, string environment = "dev",
+        string secretPath = "/")
     {
-        ClientId = clientId ?? throw new ArgumentNullException("ClientId not configured!");
-        ClientSecret = clientSecret ?? throw new ArgumentNullException("ClientSecret not configured!");
-        ProjectId = projectId ?? throw new ArgumentNullException("ProjectId not configured!");
+        ClientId = string.IsNullOrEmpty(clientId)
+            ? throw new ArgumentNullException("ClientId not configured!")
+            : clientId;
+        ClientSecret = string.IsNullOrEmpty(clientSecret)
+            ? throw new ArgumentNullException("ClientSecret not configured!")
+            : clientSecret;
+        ProjectId = string.IsNullOrEmpty(projectId)
+            ? throw new ArgumentNullException("ProjectId not configured!")
+            : projectId;
         Environment = environment;
         SecretPath = secretPath;
     }

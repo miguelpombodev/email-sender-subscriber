@@ -5,7 +5,10 @@
       "commandName": "Project",
       "dotnetRunMessages": true,
       "environmentVariables": {
-        "DOTNET_ENVIRONMENT": "Development"
+        "DOTNET_ENVIRONMENT": "Development",
+        "INFISICAL_CLIENT_ID": "cc34216a-9d02-4b9f-90c3-556cf134836b",
+        "INFISICAL_PROJECT_ID": "fb27732f-1d5e-4020-9ef5-d88a0e86d22e",
+        "INFISICAL_CLIENT_SECRET": "55e97c012efaa95596dff13ddcc4a3756caaaffb9a6b12797ae61bf9559d42a1"
       }
     }
   }

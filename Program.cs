@@ -15,8 +15,6 @@ public static class Program
     );
     public static async Task Main(string[] args)
     {
-       
-       
         var infisicalSecrets = await FetchSecretsFromInfisical();
 
         var builder = Host.CreateDefaultBuilder(args)
@@ -32,12 +30,20 @@ public static class Program
             .ConfigureServices((hostContext, services) =>
             {
                 services.Configure<RabbitMqOptions>(hostContext.Configuration.GetSection("RabbitMq"));
-                services.Configure<SmtpOptions>(hostContext.Configuration.GetSection("Smtp"));
+                services.Configure<SmtpOptions>(options =>
+                {
+                    options.Host = infisicalSecrets["Smtp:Host"];
+                    options.Port = int.Parse(infisicalSecrets["Smtp:Port"]);
+                    options.User = infisicalSecrets["Smtp:User"];
+                    options.Password = infisicalSecrets["Smtp:Password"];
+                    options.FromEmail = infisicalSecrets["Smtp:FromEmail"];
+                    options.FromName = infisicalSecrets["Smtp:FromName"];
+                });
 
                 services.AddSingleton<RabbitMqPersistentConnection>();
                 services.AddHostedService(sp => sp.GetRequiredService<RabbitMqPersistentConnection>());
 
-                services.AddScoped<IEmailSender, EmailSender>();
+                services.AddSingleton<IEmailSender, EmailSender>();
                 services.AddHostedService<EmailConsumerService>();
             });
 
@@ -73,13 +79,13 @@ public static class Program
             var secrets = new Dictionary<string, string>
             {
                 { "Smtp:Host", (await GetInfisicalSecret("SmtpHost")).SecretValue },
+                {
+                    "Smtp:Port", (await GetInfisicalSecret("SmtpPort")).SecretValue
+                },
                 { "Smtp:User", (await GetInfisicalSecret("SmtpUser")).SecretValue },
                 { "Smtp:Password", (await GetInfisicalSecret("SmtpPassword")).SecretValue },
                 { "Smtp:FromEmail", (await GetInfisicalSecret("SmtpFromEmail")).SecretValue },
-                { "Smtp:FromName", (await GetInfisicalSecret("SmtpFromName")).SecretValue },
-                {
-                    "Smtp:Port", (await GetInfisicalSecret("SmtpPort")).SecretValue
-                }
+                { "Smtp:FromName", (await GetInfisicalSecret("SmtpFromName")).SecretValue }
             };
 
             return secrets;

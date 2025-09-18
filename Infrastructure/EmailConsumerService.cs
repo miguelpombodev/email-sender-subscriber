@@ -65,12 +65,10 @@ public class EmailConsumerService : BackgroundService
             var emailData = JsonConvert.DeserializeObject<EmailToBeSend>(messageJson);
 
             if (emailData == null)
-                throw new InvalidOperationException("Payload invalid!");
+                throw new InvalidOperationException("Invalid payload!");
 
             await _emailSender.SendEmailAsync(emailData);
-
-            _logger.LogInformation("Mensagem recebida para: {To}", emailData.To);
-
+            
             await _channel.BasicAckAsync(deliveryTag, multiple: false);
         }
         catch (Exception ex)

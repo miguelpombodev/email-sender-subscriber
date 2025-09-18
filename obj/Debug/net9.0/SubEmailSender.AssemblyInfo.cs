@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SubEmailSender")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e1d70e95a5832b113917d51170a1bef7b83afa5a")]
 [assembly: System.Reflection.AssemblyProductAttribute("SubEmailSender")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SubEmailSender")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

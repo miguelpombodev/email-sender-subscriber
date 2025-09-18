@@ -1,5 +1,7 @@
 using MimeKit;
 using MailKit.Net.Smtp;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Polly;
 using Polly.Retry;
 using SubEmailSender.Config;
@@ -14,9 +16,9 @@ public interface IEmailSender
 
 public class EmailSender : IEmailSender
 {
-    public EmailSender(SmtpOptions smtpOptions, ILogger<EmailSender> logger)
+    public EmailSender(IOptions<SmtpOptions> smtpOptions, ILogger<EmailSender> logger)
     {
-        _smtpOptions = smtpOptions;
+        _smtpOptions = smtpOptions.Value;
         _logger = logger;
 
         _retryPolicy = Policy.Handle<Exception>().WaitAndRetryAsync(3,
@@ -42,20 +44,18 @@ public class EmailSender : IEmailSender
             using var client = new SmtpClient();
 
             await client.ConnectAsync(_smtpOptions.Host, _smtpOptions.Port, useSsl: false);
-            _logger.LogInformation("Conectado ao host SMTP.");
+            _logger.LogInformation("Connected successfully to STMP Host.");
 
             if (!string.IsNullOrWhiteSpace(_smtpOptions.User))
             {
                 await client.AuthenticateAsync(_smtpOptions.User, _smtpOptions.Password);
-                _logger.LogInformation("Autenticado com sucesso.");
+                _logger.LogInformation("Authenticated successfully!");
             }
 
             await client.SendAsync(message);
-            _logger.LogInformation("E-mail enviado para {To}.", email.To);
+            _logger.LogInformation("E-mail sent to {To} at {Datetime}.", email.To, DateTime.UtcNow);
 
             await client.DisconnectAsync(true);
-            
-            _logger.LogInformation("Email sent to {To}", email.To);
         }, cancellationToken);
     }
 
@@ -73,7 +73,7 @@ public class EmailSender : IEmailSender
                 HtmlBody = email.Body
             }.ToMessageBody();
 
-            _logger.LogInformation("Email message built");
+            _logger.LogInformation("Email message built - {EmailJsonBody}", JsonConvert.SerializeObject(email));
 
             return message;
         }
