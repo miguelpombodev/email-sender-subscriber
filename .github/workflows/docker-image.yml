@@ -1,0 +1,35 @@
+name: Build .NET Docker Image
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout repository
+        uses: actions/checkout@v4
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      -
+        name: Build Docker Image
+        run: |
+          docker buildx build \
+          --build-arg INFISICAL_CLIENT_ID=${{ secrets.INFISICAL_CLIENT_ID }} \
+          --build-arg INFISICAL_CLIENT_SECRET=${{ secrets.INFISICAL_CLIENT_SECRET }} \
+          --build-arg INFISICAL_PROJECT_ID=${{ secrets.INFISICAL_PROJECT_ID }} \
+          -t wallghost/email-sender-subscriber:latest \
+          --load \
+          .
+      -
+        name: Push Image to registry
+        run: docker push wallghost/email-sender-subscriber:latest
