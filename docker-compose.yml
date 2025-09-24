@@ -1,5 +1,14 @@
 version: "3.8"
 services:
+  app:
+    build:
+      context: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - rabbit
+    networks:
+      - email_worker_net
   rabbit:
     image: rabbitmq:3-management
     ports:
@@ -8,3 +17,9 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - email_worker_net
+
+networks:
+  email_worker_net:
+    driver: bridge
