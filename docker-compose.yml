@@ -9,7 +9,7 @@ services:
       - rabbit
     networks:
       - email_worker_net
-  rabbit:
+  rabbitmq:
     image: rabbitmq:3-management
     ports:
       - "5672:5672"
