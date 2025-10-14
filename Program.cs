@@ -21,11 +21,14 @@ public static class Program
             .UseSerilog((ctx, lc) => lc.WriteTo.Console())
             .ConfigureAppConfiguration((hostingContext, config) =>
             {
+                config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
                 if (infisicalSecrets != null)
                 {
                    
                     config.AddInMemoryCollection(infisicalSecrets);
                 }
+                
+                config.AddEnvironmentVariables();
             })
             .ConfigureServices((hostContext, services) =>
             {
