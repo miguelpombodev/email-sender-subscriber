@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "xNo0t/pegpw=",
+  "dgSpecHash": "nBQ1zPLl+ao=",
   "success": true,
-  "projectFilePath": "/home/pombo/Dev/C#/Helpers/SubEmailSender/SubEmailSender.csproj",
+  "projectFilePath": "/home/pombo/Dev/C#/email-sender-subscriber/SubEmailSender.csproj",
   "expectedPackageFiles": [
     "/home/pombo/.nuget/packages/bouncycastle.cryptography/2.5.1/bouncycastle.cryptography.2.5.1.nupkg.sha512",
     "/home/pombo/.nuget/packages/infisical.sdk/3.0.3/infisical.sdk.3.0.3.nupkg.sha512",

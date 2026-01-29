@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/home/pombo/Dev/C#/Helpers/SubEmailSender/SubEmailSender.csproj": {}
+    "/home/pombo/Dev/C#/email-sender-subscriber/SubEmailSender.csproj": {}
   },
   "projects": {
-    "/home/pombo/Dev/C#/Helpers/SubEmailSender/SubEmailSender.csproj": {
+    "/home/pombo/Dev/C#/email-sender-subscriber/SubEmailSender.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/pombo/Dev/C#/Helpers/SubEmailSender/SubEmailSender.csproj",
+        "projectUniqueName": "/home/pombo/Dev/C#/email-sender-subscriber/SubEmailSender.csproj",
         "projectName": "SubEmailSender",
-        "projectPath": "/home/pombo/Dev/C#/Helpers/SubEmailSender/SubEmailSender.csproj",
+        "projectPath": "/home/pombo/Dev/C#/email-sender-subscriber/SubEmailSender.csproj",
         "packagesPath": "/home/pombo/.nuget/packages/",
-        "outputPath": "/home/pombo/Dev/C#/Helpers/SubEmailSender/obj/",
+        "outputPath": "/home/pombo/Dev/C#/email-sender-subscriber/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/home/pombo/.nuget/NuGet/NuGet.Config"
@@ -20,6 +20,7 @@
           "net9.0"
         ],
         "sources": {
+          "/usr/lib/dotnet/library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -38,7 +39,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.200"
+        "SdkAnalysisLevel": "9.0.100"
       },
       "frameworks": {
         "net9.0": {
@@ -97,7 +98,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/9.0.203/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/9.0.113/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
