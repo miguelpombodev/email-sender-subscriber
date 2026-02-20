@@ -5,6 +5,8 @@
 
 Properties/launchSettings.json
 
+appsettings.Development.json
+
 # dotenv files
 .env
 
