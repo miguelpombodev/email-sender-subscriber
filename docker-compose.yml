@@ -6,7 +6,7 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - rabbit
+      - rabbitmq
     networks:
       - email_worker_net
   rabbitmq:

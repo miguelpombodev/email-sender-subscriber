@@ -28,8 +28,6 @@ public static class Program
                     .AddOptions<RabbitMqOptions>()
                     .Bind(configuration.GetSection("RabbitMq"))
                     .ValidateOnStart();
-                    
-                services.Configure<RabbitMqOptions>(hostContext.Configuration.GetSection("RabbitMq"));
 
                 services.AddSingleton<RabbitMqPersistentConnection>();
                 services.AddHostedService(sp => sp.GetRequiredService<RabbitMqPersistentConnection>());
