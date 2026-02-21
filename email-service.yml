@@ -1,0 +1,18 @@
+services:
+  app:
+    build:
+      context: .
+    environment:
+      - Smtp__Host=sandbox.smtp.mailtrap.io
+      - Smtp__Port=465
+      - Smtp__User=
+      - Smtp__Password=
+      - Smtp__FromEmail=no-respond@sender.com
+      - Smtp__FromName="Email Sender"
+      - RabbitMq__HostName=rabbitmq
+      - RabbitMq__Port=5672
+      - RabbitMq__UserName=admin
+      - RabbitMq__Password=admin123
+      - RabbitMq__QueueName=sub-email-sender
+      - RabbitMq__ExchangeName=sub-email-sender-exchange
+      - RabbitMq__RoutingKeyName=sub-email

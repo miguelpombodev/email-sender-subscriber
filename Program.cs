@@ -30,7 +30,7 @@ public static class Program
                     .ValidateOnStart();
 
                 services.AddSingleton<RabbitMqPersistentConnection>();
-                services.AddHostedService(sp => sp.GetRequiredService<RabbitMqPersistentConnection>());
+                services.AddHostedService<EmailConsumerService>();
 
                 services.AddSingleton<IEmailSender, EmailSender>();
                 services.AddHostedService<EmailConsumerService>();

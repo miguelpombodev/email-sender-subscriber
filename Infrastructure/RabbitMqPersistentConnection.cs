@@ -1,15 +1,24 @@
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 using SubEmailSender.Config;
 
 namespace SubEmailSender.Infrastructure;
 
-public class RabbitMqPersistentConnection : IHostedService, IDisposable
+public class RabbitMqPersistentConnection : IDisposable
 {
-    public RabbitMqPersistentConnection(IOptions<RabbitMqOptions> options)
+    private readonly ConnectionFactory _factory;
+    private readonly RabbitMqOptions _options;
+    private IConnection? _connection;
+    private bool _disposed;
+    private readonly ILogger<RabbitMqPersistentConnection> _logger;
+    private readonly int _maxRetries = 10;
+
+    public RabbitMqPersistentConnection(IOptions<RabbitMqOptions> options, ILogger<RabbitMqPersistentConnection> logger)
     {
+        _logger = logger;
         _options = options.Value;
-        
+
         _factory = new ConnectionFactory
         {
             HostName = _options.HostName,
@@ -19,45 +28,70 @@ public class RabbitMqPersistentConnection : IHostedService, IDisposable
         };
     }
 
-    private readonly ConnectionFactory _factory;
-    private IConnection? _connection;
-    private bool _disposed;
-    private readonly RabbitMqOptions _options;
-    
-    public async Task<IChannel> CreateChannelAsync()
-    {
-        if (!_connection.IsOpen)
-            throw new InvalidOperationException("RabbitMQ connection is not open");
+    public bool IsConnected => _connection is { IsOpen: true } && !_disposed;
 
-        return await _connection.CreateChannelAsync();
-    }
-
-    public async Task StartAsync(CancellationToken cancellationToken)
+    public async Task EnsureConnectedAsync(CancellationToken cancellationToken)
     {
-        _connection = await _factory.CreateConnectionAsync(cancellationToken);
-    }
+        if (IsConnected)
+            return;
 
-    public async Task StopAsync(CancellationToken cancellationToken)
-    {
-        if (_connection is { IsOpen: true })
-            _connection.CloseAsync();
-    }
+        var delay = TimeSpan.FromSeconds(5);
 
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!_disposed)
+        for (int attempt = 1; attempt <= _maxRetries; attempt++)
         {
-            if (disposing)
+            try
             {
-                _connection?.Dispose();
+                _connection = await _factory.CreateConnectionAsync();
+
+                if (_connection.IsOpen)
+                {
+                    RegisterEventHandlers();
+                    _logger.LogInformation("RabbitMQ connection established");
+                    return;
+                }
             }
-            _disposed = true;
+            catch (Exception e)
+            {
+                if (attempt == _maxRetries)
+                    throw;
+                
+                _logger.LogError(e, $"RabbitMQ not ready. Attempt {attempt}/{_maxRetries}");
+                await Task.Delay(delay, cancellationToken);
+            }
         }
     }
 
+    public async Task<IChannel> CreateChannelAsync()
+    {
+        if (!IsConnected)
+            throw new InvalidOperationException("No RabbitMQ connection available");
+
+        return await _connection!.CreateChannelAsync();
+    }
+
+    private void RegisterEventHandlers()
+    {
+        _connection!.ConnectionShutdownAsync += async (_, _) =>
+        {
+            _logger.LogInformation("RabbitMQ connection shutdown. Reconnecting...");
+            await EnsureConnectedAsync(CancellationToken.None);
+
+
+        };
+
+        _connection!.CallbackExceptionAsync += async (_, _) =>
+        {
+            _logger.LogInformation("RabbitMQ callback exception. Reconnecting...");
+            await EnsureConnectedAsync(CancellationToken.None);
+        };
+    }
+    
+
     public void Dispose()
     {
-        Dispose(true);
-        GC.SuppressFinalize(this);
+        if (_disposed) return;
+
+        _connection?.Dispose();
+        _disposed = true;
     }
 }
