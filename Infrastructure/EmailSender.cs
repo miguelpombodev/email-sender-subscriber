@@ -1,7 +1,7 @@
-using MimeKit;
 using MailKit.Net.Smtp;
+using MailKit.Security;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
+using MimeKit;
 using Polly;
 using Polly.Retry;
 using SubEmailSender.Config;
@@ -11,76 +11,136 @@ namespace SubEmailSender.Infrastructure;
 
 public interface IEmailSender
 {
-    Task SendEmailAsync(EmailToBeSend email, CancellationToken cancellationToken = default);
+    Task SendEmailAsync(
+        EmailToBeSend email,
+        CancellationToken cancellationToken = default);
 }
 
 public class EmailSender : IEmailSender
 {
-    public EmailSender(IOptions<SmtpOptions> smtpOptions, ILogger<EmailSender> logger)
-    {
-        _smtpOptions = smtpOptions.Value;
-        _logger = logger;
-
-        _retryPolicy = Policy.Handle<Exception>().WaitAndRetryAsync(3,
-            attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
-            onRetry: (ex, ts, attempt, context) =>
-            {
-                _logger.LogWarning(ex, "Retry {Attempt} to send email after {Delay}", attempt, ts);
-            }
-        );
-    }
-
     private readonly SmtpOptions _smtpOptions;
     private readonly ILogger<EmailSender> _logger;
     private readonly AsyncRetryPolicy _retryPolicy;
 
-    public async Task SendEmailAsync(EmailToBeSend email, CancellationToken cancellationToken = default)
+    public EmailSender(
+        IOptions<SmtpOptions> smtpOptions,
+        ILogger<EmailSender> logger)
+    {
+        _smtpOptions = smtpOptions.Value;
+        _logger = logger;
+
+        _retryPolicy = Policy
+            .Handle<Exception>()
+            .WaitAndRetryAsync(
+                retryCount: 3,
+                sleepDurationProvider: attempt =>
+                    TimeSpan.FromSeconds(Math.Pow(2, attempt)),
+                onRetry: (exception, delay, attempt, _) =>
+                {
+                    _logger.LogWarning(
+                        exception,
+                        "SMTP retry {Attempt}. Waiting {Delay}",
+                        attempt,
+                        delay);
+                });
+    }
+
+    public async Task SendEmailAsync(
+        EmailToBeSend email,
+        CancellationToken cancellationToken = default)
     {
         var message = CreateMimeMessage(email);
 
-
-        await _retryPolicy.ExecuteAsync(async ct =>
-        {
-            using var client = new SmtpClient();
-
-            await client.ConnectAsync(_smtpOptions.Host, _smtpOptions.Port, useSsl: false);
-            _logger.LogInformation("Connected successfully to STMP Host.");
-
-            if (!string.IsNullOrWhiteSpace(_smtpOptions.User))
+        await _retryPolicy.ExecuteAsync(
+            async ct =>
             {
-                await client.AuthenticateAsync(_smtpOptions.User, _smtpOptions.Password);
-                _logger.LogInformation("Authenticated successfully!");
-            }
+                using var client = new SmtpClient();
 
-            await client.SendAsync(message);
-            _logger.LogInformation("E-mail sent to {To} at {Datetime}.", email.To, DateTime.UtcNow);
+                await client.ConnectAsync(
+                    _smtpOptions.Host,
+                    _smtpOptions.Port,
+                    SecureSocketOptions.StartTls,
+                    ct);
 
-            await client.DisconnectAsync(true);
-        }, cancellationToken);
+                _logger.LogInformation(
+                    "Connected to SMTP host {Host}",
+                    _smtpOptions.Host);
+
+                if (!string.IsNullOrWhiteSpace(_smtpOptions.User))
+                {
+                    await client.AuthenticateAsync(
+                        _smtpOptions.User,
+                        _smtpOptions.Password,
+                        ct);
+
+                    _logger.LogInformation(
+                        "SMTP authentication successful");
+                }
+
+                await client.SendAsync(message, ct);
+
+                _logger.LogInformation(
+                    "Email sent to {To} at {DateTime}",
+                    email.To,
+                    DateTime.UtcNow);
+
+                await client.DisconnectAsync(
+                    true,
+                    ct);
+            },
+            cancellationToken);
     }
 
     private MimeMessage CreateMimeMessage(EmailToBeSend email)
     {
-        try
+        var message = new MimeMessage();
+
+        message.From.Add(
+            new MailboxAddress(
+                _smtpOptions.FromName,
+                _smtpOptions.FromEmail));
+
+        message.To.Add(
+            MailboxAddress.Parse(email.To));
+
+        foreach (var cc in email.Cc)
         {
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_smtpOptions.FromName, _smtpOptions.FromEmail));
-            message.To.Add(new MailboxAddress(email.To, email.To));
-            message.Subject = email.Subject;
-
-            message.Body = new BodyBuilder
-            {
-                HtmlBody = email.Body
-            }.ToMessageBody();
-
-            _logger.LogInformation("Email message built - {EmailJsonBody}", JsonConvert.SerializeObject(email));
-
-            return message;
+            message.Cc.Add(
+                MailboxAddress.Parse(cc));
         }
-        catch (Exception e)
+
+        foreach (var bcc in email.Bcc)
         {
-            Console.WriteLine(e);
-            throw;
+            message.Bcc.Add(
+                MailboxAddress.Parse(bcc));
         }
+
+        message.Subject = email.Subject;
+
+        var bodyBuilder = new BodyBuilder
+        {
+            HtmlBody = email.IsBodyHtml
+                ? email.Body
+                : null,
+
+            TextBody = email.IsBodyHtml
+                ? null
+                : email.Body
+        };
+
+        foreach (var attachment in email.Attachments)
+        {
+            var content = Convert.FromBase64String(
+                attachment.ContentBase64);
+
+            bodyBuilder.Attachments.Add(
+                attachment.FileName,
+                content,
+                ContentType.Parse(attachment.ContentType));
+        }
+
+        message.Body = bodyBuilder.ToMessageBody();
+
+        return message;
     }
 }
