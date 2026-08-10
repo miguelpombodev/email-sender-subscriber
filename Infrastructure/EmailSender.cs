@@ -20,7 +20,6 @@ public class EmailSender : IEmailSender
 {
     private readonly SmtpOptions _smtpOptions;
     private readonly ILogger<EmailSender> _logger;
-    private readonly AsyncRetryPolicy _retryPolicy;
 
     public EmailSender(
         IOptions<SmtpOptions> smtpOptions,
@@ -28,21 +27,7 @@ public class EmailSender : IEmailSender
     {
         _smtpOptions = smtpOptions.Value;
         _logger = logger;
-
-        _retryPolicy = Policy
-            .Handle<Exception>()
-            .WaitAndRetryAsync(
-                retryCount: 3,
-                sleepDurationProvider: attempt =>
-                    TimeSpan.FromSeconds(Math.Pow(2, attempt)),
-                onRetry: (exception, delay, attempt, _) =>
-                {
-                    _logger.LogWarning(
-                        exception,
-                        "SMTP retry {Attempt}. Waiting {Delay}",
-                        attempt,
-                        delay);
-                });
+        
     }
 
     public async Task SendEmailAsync(
@@ -51,43 +36,40 @@ public class EmailSender : IEmailSender
     {
         var message = CreateMimeMessage(email);
 
-        await _retryPolicy.ExecuteAsync(
-            async ct =>
-            {
-                using var client = new SmtpClient();
+        using var client = new SmtpClient();
 
-                await client.ConnectAsync(
-                    _smtpOptions.Host,
-                    _smtpOptions.Port,
-                    SecureSocketOptions.StartTls,
-                    ct);
+        await client.ConnectAsync(
+            _smtpOptions.Host,
+            _smtpOptions.Port,
+            SecureSocketOptions.StartTls,
+            cancellationToken);
 
-                _logger.LogInformation(
-                    "Connected to SMTP host {Host}",
-                    _smtpOptions.Host);
+        _logger.LogInformation(
+            "Connected to SMTP host {Host}",
+            _smtpOptions.Host);
 
-                if (!string.IsNullOrWhiteSpace(_smtpOptions.User))
-                {
-                    await client.AuthenticateAsync(
-                        _smtpOptions.User,
-                        _smtpOptions.Password,
-                        ct);
+        if (!string.IsNullOrWhiteSpace(_smtpOptions.User))
+        {
+            await client.AuthenticateAsync(
+                _smtpOptions.User,
+                _smtpOptions.Password,
+                cancellationToken);
 
-                    _logger.LogInformation(
-                        "SMTP authentication successful");
-                }
+            _logger.LogInformation(
+                "SMTP authentication successful");
+        }
 
-                await client.SendAsync(message, ct);
+        await client.SendAsync(
+            message,
+            cancellationToken);
 
-                _logger.LogInformation(
-                    "Email sent to {To} at {DateTime}",
-                    email.To,
-                    DateTime.UtcNow);
+        _logger.LogInformation(
+            "Email sent to {To} at {DateTime}",
+            email.To,
+            DateTime.UtcNow);
 
-                await client.DisconnectAsync(
-                    true,
-                    ct);
-            },
+        await client.DisconnectAsync(
+            true,
             cancellationToken);
     }
 

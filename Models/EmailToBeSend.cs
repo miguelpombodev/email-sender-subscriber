@@ -2,6 +2,7 @@ namespace SubEmailSender.Models;
 
 public record EmailToBeSend
 {
+	public Guid EmailId { get; set; }
 	public string To { get; init; } = string.Empty;
 
 	public List<string> Cc { get; init; } = [];

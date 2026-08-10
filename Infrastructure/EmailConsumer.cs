@@ -6,6 +6,7 @@ namespace SubEmailSender.Infrastructure;
 public class EmailConsumer : IConsumer<EmailToBeSend>
 {
 	private readonly IEmailSender _emailSender;
+
 	private readonly ILogger<EmailConsumer> _logger;
 
 	public EmailConsumer(
@@ -21,17 +22,19 @@ public class EmailConsumer : IConsumer<EmailToBeSend>
 		var email = context.Message;
 
 		_logger.LogInformation(
-			"Processing email to {To}, MessageId: {MessageId}",
+			"Processing email to {To}, MessageId: {MessageId}, EmailId: {EmailId}",
 			email.To,
-			context.MessageId);
+			context.MessageId,
+			email.EmailId);
 
 		await _emailSender.SendEmailAsync(
 			email,
 			context.CancellationToken);
 
 		_logger.LogInformation(
-			"Email successfully processed. To: {To}, MessageId: {MessageId}",
+			"Email successfully processed. To: {To}, MessageId: {MessageId}, EmailId: {EmailId}",
 			email.To,
-			context.MessageId);
+			context.MessageId,
+			email.EmailId);
 	}
 }

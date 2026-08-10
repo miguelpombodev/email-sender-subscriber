@@ -1,4 +1,5 @@
 using MassTransit;
+using Microsoft.Extensions.Options;
 using Serilog;
 using SubEmailSender.Config;
 using SubEmailSender.Infrastructure;
@@ -40,42 +41,44 @@ public static class Program
 
 					x.UsingRabbitMq((context, cfg) =>
 					{
-						RabbitMqOptions rabbitMqOptions =
-							context.GetRequiredService<
-									Microsoft.Extensions.Options.IOptions<RabbitMqOptions>>()
-								.Value;
+						var options =
+							context.GetRequiredService<IOptions<RabbitMqOptions>>().Value;
 
 						cfg.Host(
-							rabbitMqOptions.HostName,
-							(ushort)rabbitMqOptions.Port,
-							rabbitMqOptions.VirtualHost,
+							options.HostName,
+							(ushort)options.Port,
+							options.VirtualHost,
 							host =>
 							{
-								host.Username(rabbitMqOptions.UserName);
-								host.Password(rabbitMqOptions.Password);
+								host.Username(options.UserName);
+								host.Password(options.Password);
+
+								host.RequestedConnectionTimeout(
+									TimeSpan.FromSeconds(10));
 							});
 
 						cfg.ReceiveEndpoint(
-							rabbitMqOptions.QueueName,
+							options.QueueName,
 							endpoint =>
 							{
 								endpoint.Durable = true;
 								endpoint.AutoDelete = false;
+
 								endpoint.PrefetchCount =
-									rabbitMqOptions.PrefetchCount;
-								
-								endpoint.SetQueueArgument("x-message-ttl", rabbitMqOptions.QueueMessageTtl);
-								endpoint.SetQueueArgument("x-dead-letter-exchange", rabbitMqOptions.DeadLetterExchangeName);
-								
+									options.PrefetchCount;
+
 								endpoint.UseRawJsonDeserializer();
-								
+
 								endpoint.UseMessageRetry(retry =>
 								{
-									retry.Immediate(2);
+									retry.Exponential(
+										retryLimit: 3,
+										minInterval: TimeSpan.FromSeconds(2),
+										maxInterval: TimeSpan.FromSeconds(30),
+										intervalDelta: TimeSpan.FromSeconds(5));
 								});
 
-								endpoint.ConfigureConsumer<EmailConsumer>(
-									context);
+								endpoint.ConfigureConsumer<EmailConsumer>(context);
 							});
 					});
 				});
