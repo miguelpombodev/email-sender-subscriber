@@ -3,7 +3,7 @@ using MassTransit;
 
 namespace SubEmailSender.Infrastructure;
 
-public class EmailConsumer : IConsumer<EmailToBeSend>
+public class EmailConsumer : IConsumer<EmailToBeSendContract>
 {
 	private readonly IEmailSender _emailSender;
 
@@ -17,7 +17,7 @@ public class EmailConsumer : IConsumer<EmailToBeSend>
 		_logger = logger;
 	}
 
-	public async Task Consume(ConsumeContext<EmailToBeSend> context)
+	public async Task Consume(ConsumeContext<EmailToBeSendContract> context)
 	{
 		var email = context.Message;
 

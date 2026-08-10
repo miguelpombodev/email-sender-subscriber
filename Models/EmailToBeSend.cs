@@ -1,6 +1,6 @@
 namespace CloudMart.Messaging.Contracts;
 
-public record EmailToBeSend
+public record EmailToBeSendContract
 {
 	public Guid Id { get; set; }
 	public string To { get; init; } = string.Empty;

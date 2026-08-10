@@ -10,7 +10,7 @@ namespace SubEmailSender.Infrastructure;
 public interface IEmailSender
 {
     Task SendEmailAsync(
-        EmailToBeSend email,
+        EmailToBeSendContract email,
         CancellationToken cancellationToken = default);
 }
 
@@ -29,7 +29,7 @@ public class EmailSender : IEmailSender
     }
 
     public async Task SendEmailAsync(
-        EmailToBeSend email,
+        EmailToBeSendContract email,
         CancellationToken cancellationToken = default)
     {
         var message = CreateMimeMessage(email);
@@ -71,7 +71,7 @@ public class EmailSender : IEmailSender
             cancellationToken);
     }
 
-    private MimeMessage CreateMimeMessage(EmailToBeSend email)
+    private MimeMessage CreateMimeMessage(EmailToBeSendContract email)
     {
         var message = new MimeMessage();
 
