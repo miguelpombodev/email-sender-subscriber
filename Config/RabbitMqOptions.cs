@@ -13,4 +13,6 @@ public class RabbitMqOptions
 	public string QueueName { get; set; } = "sub-email-sender";
 
 	public ushort PrefetchCount { get; set; } = 10;
+	public int QueueMessageTtl { get; set; } = 0;
+	public string DeadLetterExchangeName { get; set; } = "x-dead-letter-exchange-sub-email-sender";
 }

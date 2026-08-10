@@ -59,8 +59,13 @@ public static class Program
 							rabbitMqOptions.QueueName,
 							endpoint =>
 							{
+								endpoint.Durable = true;
+								endpoint.AutoDelete = false;
 								endpoint.PrefetchCount =
 									rabbitMqOptions.PrefetchCount;
+								
+								endpoint.SetQueueArgument("x-message-ttl", rabbitMqOptions.QueueMessageTtl);
+								endpoint.SetQueueArgument("x-dead-letter-exchange", rabbitMqOptions.DeadLetterExchangeName);
 								
 								endpoint.UseRawJsonDeserializer();
 								
