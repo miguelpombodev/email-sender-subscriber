@@ -1,11 +1,9 @@
+using CloudMart.Messaging.Contracts;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Options;
 using MimeKit;
-using Polly;
-using Polly.Retry;
 using SubEmailSender.Config;
-using SubEmailSender.Models;
 
 namespace SubEmailSender.Infrastructure;
 

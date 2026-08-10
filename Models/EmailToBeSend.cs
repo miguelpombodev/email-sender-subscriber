@@ -1,8 +1,8 @@
-namespace SubEmailSender.Models;
+namespace CloudMart.Messaging.Contracts;
 
 public record EmailToBeSend
 {
-	public Guid EmailId { get; set; }
+	public Guid Id { get; set; }
 	public string To { get; init; } = string.Empty;
 
 	public List<string> Cc { get; init; } = [];

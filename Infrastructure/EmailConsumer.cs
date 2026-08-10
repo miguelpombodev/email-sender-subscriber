@@ -1,5 +1,5 @@
+using CloudMart.Messaging.Contracts;
 using MassTransit;
-using SubEmailSender.Models;
 
 namespace SubEmailSender.Infrastructure;
 
@@ -25,7 +25,7 @@ public class EmailConsumer : IConsumer<EmailToBeSend>
 			"Processing email to {To}, MessageId: {MessageId}, EmailId: {EmailId}",
 			email.To,
 			context.MessageId,
-			email.EmailId);
+			email.Id);
 
 		await _emailSender.SendEmailAsync(
 			email,
@@ -35,6 +35,6 @@ public class EmailConsumer : IConsumer<EmailToBeSend>
 			"Email successfully processed. To: {To}, MessageId: {MessageId}, EmailId: {EmailId}",
 			email.To,
 			context.MessageId,
-			email.EmailId);
+			email.Id);
 	}
 }
