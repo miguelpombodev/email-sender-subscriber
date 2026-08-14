@@ -1,6 +1,8 @@
-namespace CloudMart.Messaging.Contracts;
+using Cloudmart.Contracts.Messaging.Emails;
 
-public record EmailToBeSendContract
+namespace SubEmailSender.Models;
+
+public record EmailToBeSendContract : IEmailToBeSend
 {
 	public Guid Id { get; set; }
 	public string To { get; init; } = string.Empty;
@@ -15,10 +17,10 @@ public record EmailToBeSendContract
 
 	public bool IsBodyHtml { get; init; } = true;
 
-	public List<EmailAttachment> Attachments { get; init; } = [];
+	public List<IEmailAttachment> Attachments { get; init; } = [];
 }
 
-public record EmailAttachment
+public record EmailAttachment : IEmailAttachment
 {
 	public string FileName { get; init; } = string.Empty;
 

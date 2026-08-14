@@ -1,9 +1,10 @@
-using CloudMart.Messaging.Contracts;
+using Cloudmart.Contracts.Messaging.Emails;
 using MassTransit;
+using SubEmailSender.Models;
 
 namespace SubEmailSender.Infrastructure;
 
-public class EmailConsumer : IConsumer<EmailToBeSendContract>
+public class EmailConsumer : IConsumer<IEmailToBeSend>
 {
 	private readonly IEmailSender _emailSender;
 
@@ -17,7 +18,7 @@ public class EmailConsumer : IConsumer<EmailToBeSendContract>
 		_logger = logger;
 	}
 
-	public async Task Consume(ConsumeContext<EmailToBeSendContract> context)
+	public async Task Consume(ConsumeContext<IEmailToBeSend> context)
 	{
 		var email = context.Message;
 

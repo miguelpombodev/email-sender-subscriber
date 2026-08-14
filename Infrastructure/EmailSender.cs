@@ -1,16 +1,17 @@
-using CloudMart.Messaging.Contracts;
+using Cloudmart.Contracts.Messaging.Emails;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Options;
 using MimeKit;
 using SubEmailSender.Config;
+using SubEmailSender.Models;
 
 namespace SubEmailSender.Infrastructure;
 
 public interface IEmailSender
 {
     Task SendEmailAsync(
-        EmailToBeSendContract email,
+        IEmailToBeSend email,
         CancellationToken cancellationToken = default);
 }
 
@@ -29,7 +30,7 @@ public class EmailSender : IEmailSender
     }
 
     public async Task SendEmailAsync(
-        EmailToBeSendContract email,
+        IEmailToBeSend email,
         CancellationToken cancellationToken = default)
     {
         var message = CreateMimeMessage(email);
@@ -71,7 +72,7 @@ public class EmailSender : IEmailSender
             cancellationToken);
     }
 
-    private MimeMessage CreateMimeMessage(EmailToBeSendContract email)
+    private MimeMessage CreateMimeMessage(IEmailToBeSend email)
     {
         var message = new MimeMessage();
 

@@ -37,6 +37,7 @@ public static class Program
 
 				services.AddMassTransit(x =>
 				{
+					x.SetKebabCaseEndpointNameFormatter();
 					x.AddConsumer<EmailConsumer>();
 
 					x.UsingRabbitMq((context, cfg) =>
