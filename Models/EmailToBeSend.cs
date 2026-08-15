@@ -1,4 +1,5 @@
-using Cloudmart.Contracts.Messaging.Emails;
+
+using Cloudmart.Contracts.Messaging.Interfaces.Emails;
 
 namespace SubEmailSender.Models;
 

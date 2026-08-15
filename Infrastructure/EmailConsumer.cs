@@ -1,4 +1,4 @@
-using Cloudmart.Contracts.Messaging.Emails;
+using Cloudmart.Contracts.Messaging.Interfaces.Emails;
 using MassTransit;
 using SubEmailSender.Models;
 

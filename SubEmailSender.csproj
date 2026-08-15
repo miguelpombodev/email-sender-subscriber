@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="cloudmart.contracts" Version="1.0.1" />
+    <PackageReference Include="cloudmart.contracts" Version="1.0.2" />
     <PackageReference Include="Infisical.Sdk" Version="3.0.3" />
     <PackageReference Include="MailKit" Version="4.13.0" />
     <PackageReference Include="MassTransit" Version="8.5.10" />
