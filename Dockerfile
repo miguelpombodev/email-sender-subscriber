@@ -3,16 +3,20 @@ ARG BUILD_CONFIGURATION=Release
 
 WORKDIR /src
 
+COPY nuget.config .
 COPY ["SubEmailSender.csproj", "./"]
 
-RUN --mount=type=cache,target=/root/.nuget/packages \
-    dotnet restore "SubEmailSender.csproj" --verbosity normal 
+RUN --mount=type=secret,id=github_token \
+    --mount=type=cache,target=/root/.nuget/packages \
+    export GITHUB_TOKEN="$(cat /run/secrets/github_token)" && \
+    dotnet restore "SubEmailSender.csproj" --verbosity normal --configfile nuget.config
 
 COPY . .
 
 RUN --mount=type=cache,target=/root/.nuget/packages \
     dotnet publish "SubEmailSender.csproj" \
-    -c $BUILD_CONFIGURATION -o /app/publish \
+    --configuration $BUILD_CONFIGURATION \
+    -o /app/publish \
     /p:UseAppHost=false
     
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
@@ -22,6 +26,9 @@ ARG APP_UID=1000
 RUN adduser -S -u ${APP_UID:-1000} -G ${APP_USER} -h /app ${APP_USER} || true
 
 WORKDIR /app
+
+ENV DOTNET_RUNNING_IN_CONTAINER=true \
+    DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 
 EXPOSE 8080
 COPY --from=build --chown=${APP_USER}:${APP_USER} /app/publish .
