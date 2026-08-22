@@ -6,9 +6,9 @@ WORKDIR /src
 COPY nuget.config .
 COPY ["SubEmailSender.csproj", "./"]
 
-RUN --mount=type=secret,id=github_token \
+RUN --mount=type=secret,id=GITHUB_TOKEN \
     --mount=type=cache,target=/root/.nuget/packages \
-    export GITHUB_TOKEN="$(cat /run/secrets/github_token)" && \
+    export GITHUB_TOKEN="$(cat /run/secrets/GITHUB_TOKEN)" && \
     dotnet restore "SubEmailSender.csproj" --verbosity normal --configfile nuget.config
 
 COPY . .
@@ -16,6 +16,7 @@ COPY . .
 RUN --mount=type=cache,target=/root/.nuget/packages \
     dotnet publish "SubEmailSender.csproj" \
     --configuration $BUILD_CONFIGURATION \
+    --no-restore \
     -o /app/publish \
     /p:UseAppHost=false
     
