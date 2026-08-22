@@ -44,6 +44,6 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: wallghost/email-sender-subscriber:latest
           secrets: |
-            github_token=${{ secrets.GITHUB_TOKEN }}
+            GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
